@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER SURGE: EVOLUTION (MODIFICACIONES)</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body {
+            margin: 0; padding: 0; background: #030308; color: #00ffff;
+            font-family: 'Courier New', Courier, monospace; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
+        }
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.4), inset 0 0 30px rgba(255, 0, 128, 0.3);
+            border: 2px solid #00ffff; background: #000;
+        }
+        canvas { display: block; background: radial-gradient(circle at center, #0f0c1b 0%, #010103 100%); }
+        .ui-overlay {
+            position: absolute; top: 15px; left: 15px; right: 15px;
+            display: flex; justify-content: space-between; pointer-events: none;
+            font-size: 16px; font-weight: bold; text-shadow: 0 0 10px #00ffff; letter-spacing: 1px;
+        }
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(3, 3, 8, 0.92); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10; text-align: center; padding: 20px;
+        }
+        h1 {
+            font-size: 38px; margin-bottom: 10px; color: #ff007f;
+            text-shadow: 0 0 15px #ff007f, 0 0 30px #00ffff; letter-spacing: 3px;
+        }
+        h2 { font-size: 20px; color: #00ffff; margin-bottom: 15px; }
+        p { font-size: 14px; color: #a0a0c0; margin-bottom: 20px; max-width: 420px; line-height: 1.4; }
+        .btn {
+            background: linear-gradient(45deg, #ff007f, #7f00ff);
+            border: 2px solid #00ffff; color: #fff; padding: 10px 24px;
+            font-size: 16px; font-family: 'Courier New', Courier, monospace; font-weight: bold;
+            cursor: pointer; text-shadow: 0 0 5px #000; box-shadow: 0 0 15px rgba(255, 0, 127, 0.5);
+            transition: all 0.2s ease; letter-spacing: 2px; margin: 6px;
+        }
+        .btn:hover {
+            transform: scale(1.05); background: linear-gradient(45deg, #00ffff, #ff007f);
+            box-shadow: 0 0 25px #00ffff; color: #030308;
+        }
+        .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .hidden { display: none !important; }
+        .shop-grid { display: flex; gap: 15px; margin-bottom: 20px; }
+        .shop-card {
+            border: 2px solid #555; padding: 15px; width: 130px; cursor: pointer; background: rgba(0,0,0,0.5);
+            transition: 0.2s;
+        }
+        .shop-card.selected { border-color: #00ffff; box-shadow: 0 0 15px #00ffff; }
+        .shop-card:hover { border-color: #ff007f; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="canvas" width="500" height="680"></canvas>
+        
+        <div class="ui-overlay">
+            <div>SCORE: <span id="score-val">0</span></div>
+            <div>NVL: <span id="wave-val">1</span>/<span id="max-wave">100</span></div>
+            <div>CRÉDITOS: 🪙<span id="credits-val">0</span></div>
+            <div>VIDA: <span id="shield-val">100</span>%</div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen">
+            <h1>CYBER SURGE: EVOLUTION</h1>
+            <p>100 Niveles • Multijugador Dúo • Tienda de Skins • Jefes Épicos</p>
+            <div style="margin-bottom: 15px;">
+                <label>Dificultad: </label>
+                <select id="diff-select" style="background:#111; color:#00ffff; border:1px solid #00ffff; padding:5px; font-family:inherit;">
+                    <option value="easy">Fácil (Casual)</option>
+                    <option value="normal" selected>Normal (Arcade)</option>
+                    <option value="hard">Hardcore (Insano)</option>
+                </select>
+            </div>
+            <div class="btn-row">
+                <button class="btn" onclick="initGame(1)">1 JUGADOR</button>
+                <button class="btn" onclick="initGame(2)">2 JUGADORES (DÚO)</button>
+            </div>
+            <button class="btn" style="background: linear-gradient(45deg, #007fff, #00ffaa); font-size:14px; padding:8px 20px;" onclick="openShop()">TIENDA / SKINS</button>
+        </div>
+
+        <!-- Shop Screen -->
+        <div id="shop-screen" class="screen hidden">
+            <h1>GARAGE & HANGAR</h1>
+            <p>Elige tu Skin favorita para la nave:</p>
+            <div class="shop-grid">
+                <div class="shop-card selected" id="skin-0" onclick="selectSkin(0)">
+                    <div style="color:#00ffff; font-weight:bold;">Neón Cyan</div>
+                    <div style="font-size:12px; color:#888; margin-top:5px;">Clásica</div>
+                </div>
+                <div class="shop-card" id="skin-1" onclick="selectSkin(1)">
+                    <div style="color:#ff007f; font-weight:bold;">Fuego Rosa</div>
+                    <div style="font-size:12px; color:#888; margin-top:5px;">Estilo Rebelde</div>
+                </div>
+                <div class="shop-card" id="skin-2" onclick="selectSkin(2)">
+                    <div style="color:#00ff55; font-weight:bold;">Matrix Verde</div>
+                    <div style="font-size:12px; color:#888; margin-top:5px;">Hacker Pro</div>
+                </div>
+            </div>
+            <button class="btn" onclick="closeShop()">VOLVER</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen hidden">
+            <h1 style="color: #ff2222; text-shadow: 0 0 15px #ff0000;">SISTEMA COLAPSADO</h1>
+            <p>Llegaste hasta el Nivel <span id="final-wave" style="color:#ff007f; font-weight:bold;">1</span> con <span id="final-score" style="color: #00ffff; font-weight: bold;">0</span> puntos.</p>
+            <button class="btn" onclick="returnToMenu()">MENÚ PRINCIPAL</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const scoreEl = document.getElementById('score-val');
+        const waveEl = document.getElementById('wave-val');
+        const creditsEl = document.getElementById('credits-val');
+        const shieldEl = document.getElementById('shield-val');
+        const startScreen = document.getElementById('start-screen');
+        const shopScreen = document.getElementById('shop-screen');
+        const gameoverScreen = document.getElementById('gameover-screen');
+        const finalScoreEl = document.getElementById('final-score');
+        const finalWaveEl = document.getElementById('final-wave');
+        const diffSelect = document.getElementById('diff-select');
+
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                if (type === 'shoot') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                } else if (type === 'explosion') {
+                    osc.type = 'square'; osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.linearRampToValueAtTime(20, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                } else if (type === 'hit') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(60, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                }
+                osc.start(now); osc.stop(now + 0.3);
+            } catch(e) {}
+        }
+
+        let gameState = 'START';
+        let numPlayers = 1;
+        let score = 0;
+        let wave = 1;
+        let credits = 0;
+        let shield = 100;
+        let frameCount = 0;
+        let screenShake = 0;
+        let currentSkin = 0;
+        let difficulty = 'normal';
+
+        const skins = ['#00ffff', '#ff007f', '#00ff55'];
+
+        let p1 = { x: 200, y: 580, w: 28, h: 28, speed: 5, color: '#00ffff', weaponLevel: 1, shootTimer: 0 };
+        let p2 = { x: 300, y: 580, w: 28, h: 28, speed: 5, color: '#ffaa00', weaponLevel: 1, shootTimer: 0 };
+
+        let keys = {};
+        let bullets = [], enemies = [], particles = [], powerups = [];
+
+        window.addEventListener('keydown', e => { keys[e.code] = true; });
+        window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+        function openShop() { startScreen.classList.add('hidden'); shopScreen.classList.remove('hidden'); }
+        function closeShop() { shopScreen.classList.add('hidden'); startScreen.classList.remove('start-screen') || startScreen.classList.remove('hidden'); }
+        function selectSkin(id) {
+            currentSkin = id;
+            p1.color = skins[id];
+            document.querySelectorAll('.shop-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(`skin-${id}`).classList.add('selected');
+        }
+
+        function initGame(playersCount) {
+            initAudio();
+            numPlayers = playersCount;
+            difficulty = diffSelect.value;
+            score = 0; wave = 1; credits = 0; shield = 100;
+            bullets = []; enemies = []; particles = []; powerups = [];
+            
+            p1.x = numPlayers === 2 ? 180 : 250; p1.y = 580; p1.weaponLevel = 1;
+            p2.x = 320; p2.y = 580; p2.weaponLevel = 1;
+
+            startScreen.classList.add('hidden');
+            shopScreen.classList.add('hidden');
+            gameoverScreen.classList.add('hidden');
+            gameState = 'PLAYING';
+            spawnWave();
+        }
+
+        function spawnWave() {
+            let count = 3 + Math.floor(wave * 1.5);
+            let diffMultiplier = difficulty === 'hard' ? 1.4 : (difficulty === 'easy' ? 0.7 : 1);
+            
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    if (gameState !== 'PLAYING') return;
+                    let isBoss = (wave % 5 === 0 && i === 0);
+                    enemies.push({
+                        x: Math.random() * (canvas.width - 50) + 25,
+                        y: -40,
+                        w: isBoss ? 60 : 32,
+                        h: isBoss ? 60 : 32,
+                        hp: isBoss ? wave * 8 : Math.floor(wave / 10) + 1,
+                        maxHp: isBoss ? wave * 8 : Math.floor(wave / 10) + 1,
+                        speed: (isBoss ? 1 : (1.5 + wave * 0.05)) * diffMultiplier,
+                        color: isBoss ? '#ff0000' : '#ff0055',
+                        scoreVal: isBoss ? 1000 : 100,
+                        isBoss: isBoss
+                    });
+                }, i * 350);
+            }
+        }
+
+        function createExplosion(x, y, color, count = 12) {
+            for (let i = 0; i < count; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let speed = Math.random() * 4 + 1;
+                particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: 1, decay: 0.03, color, size: Math.random()*3+2 });
+            }
+        }
+
+        function update() {
+            if (gameState !== 'PLAYING') return;
+            frameCount++;
+            if (screenShake > 0) screenShake *= 0.85;
+
+            // P1 Controls (WASD + Space + E)
+            if ((keys['KeyA'] || keys['ArrowLeft']) && p1.x > 20) p1.x -= p1.speed;
+            if ((keys['KeyD'] || keys['ArrowRight']) && p1.x < canvas.width - 20) p1.x += p1.speed;
+            if ((keys['KeyW']) && p1.y > 40) p1.y -= p1.speed;
+            if ((keys['KeyS']) && p1.y < canvas.height - 30) p1.y += p1.speed;
+
+            p1.shootTimer++;
+            if (p1.shootTimer > 10) {
+                p1.shootTimer = 0; playSound('shoot');
+                bullets.push({ x: p1.x, y: p1.y - 15, vx: 0, vy: -12, color: p1.color, owner: 'p1' });
+            }
+
+            // P2 Controls (Flechas del teclado + Enter)
+            if (numPlayers === 2) {
+                if (keys['Numpad4'] || keys['KeyJ']) p2.x -= p2.speed;
+                if (keys['Numpad6'] || keys['KeyL']) p2.x += p2.speed;
+                if (keys['Numpad8'] || keys['KeyI']) p2.y -= p2.speed;
+                if (keys['Numpad5'] || keys['KeyK']) p2.y += p2.speed;
+
+                p2.shootTimer++;
+                if (p2.shootTimer > 10) {
+                    p2.shootTimer = 0; playSound('shoot');
+                    bullets.push({ x: p2.x, y: p2.y - 15, vx: 0, vy: -12, color: p2.color, owner: 'p2' });
+                }
+            }
+
+            // Bullets update
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.x += b.vx; b.y += b.vy;
+                if (b.y < 0 || b.y > canvas.height) bullets.splice(i, 1);
+            }
+
+            // Enemies update
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                e.y += e.speed;
+
+                // Check collision with P1
+                let dist1 = Math.hypot(p1.x - e.x, p1.y - e.y);
+                if (dist1 < 25) {
+                    playSound('hit'); screenShake = 12; shield -= 20;
+                    createExplosion(e.x, e.y, e.color, 10);
+                    enemies.splice(i, 1);
+                    if (shield <= 0) gameOver();
+                    continue;
+                }
+
+                // Check bullets hit enemies
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    let b = bullets[j];
+                    if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
+                        e.hp--; bullets.splice(j, 1);
+                        if (e.hp <= 0) {
+                            playSound('explosion');
+                            score += e.scoreVal; credits += e.isBoss ? 50 : 5;
+                            createExplosion(e.x, e.y, e.color, 15);
+                            enemies.splice(i, 1);
+                        }
+                        break;
+                    }
+                }
+
+                if (e && e.y > canvas.height + 30) {
+                    enemies.splice(i, 1);
+                    shield -= 10;
+                    if (shield <= 0) gameOver();
+                }
+            }
+
+            // Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let pt = particles[i];
+                pt.x += pt.vx; pt.y += pt.vy; pt.life -= pt.decay;
+                if (pt.life <= 0) particles.splice(i, 1);
+            }
+
+            // Check wave clear
+            if (enemies.length === 0) {
+                if (wave < 100) {
+                    wave++;
+                    spawnWave();
+                }
+            }
+
+            scoreEl.innerText = score;
+            waveEl.innerText = wave;
+            creditsEl.innerText = credits;
+            shieldEl.innerText = Math.max(0, shield);
+        }
+
+        function draw() {
+            ctx.save();
+            if (screenShake > 0) {
+                ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < 35; i++) {
+                let px = (i * 41 + frameCount * 0.4) % canvas.width;
+                let py = (i * 67 + frameCount * (i % 2 + 1)) % canvas.height;
+                ctx.globalAlpha = (i % 4) * 0.15 + 0.2;
+                ctx.fillRect(px, py, 2, 2);
+            }
+            ctx.globalAlpha = 1.0;
+
+            // Particles
+            particles.forEach(pt => {
+                ctx.fillStyle = pt.color; ctx.globalAlpha = pt.life;
+                ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+            });
+            ctx.globalAlpha = 1.0;
+
+            // Bullets
+            bullets.forEach(b => {
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x - 2, b.y - 6, 4, 12);
+            });
+
+            // Enemies
+            enemies.forEach(e => {
+                ctx.fillStyle = e.color;
+                ctx.beginPath();
+                if (e.isBoss) {
+                    ctx.rect(e.x - e.w/2, e.y - e.h/2, e.w, e.h);
+                } else {
+                    ctx.moveTo(e.x, e.y - e.h/2);
+                    ctx.lineTo(e.x - e.w/2, e.y + e.h/2);
+                    ctx.lineTo(e.x + e.w/2, e.y + e.h/2);
+                }
+                ctx.closePath();
+                ctx.fill();
+            });
+
+            // Draw P1
+            ctx.fillStyle = p1.color;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y - 15);
+            ctx.lineTo(p1.x - 14, p1.y + 15);
+            ctx.lineTo(p1.x, p1.y + 8);
+            ctx.lineTo(p1.x + 14, p1.y + 15);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw P2 if active
+            if (numPlayers === 2) {
+                ctx.fillStyle = p2.color;
+                ctx.beginPath();
+                ctx.moveTo(p2.x, p2.y - 15);
+                ctx.lineTo(p2.x - 14, p2.y + 15);
+                ctx.lineTo(p2.x, p2.y + 8);
+                ctx.lineTo(p2.x + 14, p2.y + 15);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            finalScoreEl.innerText = score;
+            finalWaveEl.innerText = wave;
+            gameoverScreen.classList.remove('hidden');
+        }
+
+        function returnToMenu() {
+            gameoverScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            gameState = 'START';
+        }
+
+        function mainLoop() {
+            update();
+            draw();
+            requestAnimationFrame(mainLoop);
+        }
+
+        requestAnimationFrame(mainLoop);
+    </script>
+</body>
+</html>
